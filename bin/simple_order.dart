@@ -1,52 +1,69 @@
-const menu = {
-  'Adobo rice': 85.0,
-  'Iced tea': 35.0,
-  'Turon': 25.0,
-};
+const menu = {'Adobo rice': 85.0, 'Iced tea': 35.0, 'Turon': 25.0};
 
 class OrderItem {
   final String name;
   final double price;
   final int qty;
 
-  OrderItem(this.name, this.price, this.qty);
+  const OrderItem({
+    required this.name,
+    required this.price,
+    required this.qty,
+  });
 
   double get subtotal => price * qty;
 }
 
-double total(List<OrderItem> items) =>
-    items.fold(0.0, (sum, item) => sum + item.subtotal);
+OrderItem orderOf(String name, int qty) {
+  final price = menu[name];
+  if (price == null) {
+    throw ArgumentError('Item "$name" is not on the menu.');
+  }
+  return OrderItem(name: name, price: price, qty: qty);
+}
+
+double total(List<OrderItem> items) {
+  return items.fold(0.0, (sum, item) => sum + item.subtotal);
+}
 
 void printReceipt(List<OrderItem> items, {String? customer}) {
-  customer ??= 'Guest';
+  final customerName = customer ?? 'Guest';
+  print('Order for $customerName');
 
-  double subtotal = total(items);
-  double discount = subtotal >= 300 ? subtotal * 0.10 : 0.0;
-  double finalTotal = subtotal - discount;
-
-  print('Order for $customer');
-
-  for (var item in items) {
-    print(
-      '${item.qty} x ${item.name}\t${item.subtotal.toStringAsFixed(2)}',
-    );
+  for (final item in items) {
+    final itemDesc = '${item.qty} x ${item.name}';
+    final itemSub = item.subtotal.toStringAsFixed(2);
+    print('${itemDesc.padRight(18)}${itemSub.padLeft(10)}');
   }
 
-  print('Subtotal\t${subtotal.toStringAsFixed(2)}');
+  final subtotalVal = total(items);
+  print('Subtotal'.padRight(18) + subtotalVal.toStringAsFixed(2).padLeft(10));
 
-  if (discount > 0) {
-    print('Discount 10%\t-${discount.toStringAsFixed(2)}');
+  double finalTotal = subtotalVal;
+  if (subtotalVal >= 300) {
+    final discount = subtotalVal * 0.10;
+    print('Discount 10%'.padRight(18) + '-${discount.toStringAsFixed(2)}'.padLeft(10));
+    finalTotal -= discount;
   }
 
-  print('Total\t${finalTotal.toStringAsFixed(2)}');
+  print('Total'.padRight(18) + finalTotal.toStringAsFixed(2).padLeft(10));
 }
 
 void main() {
-  final order = [
-    OrderItem('Adobo rice', menu['Adobo rice']!, 3),
-    OrderItem('Iced tea', menu['Iced tea']!, 1),
-    OrderItem('Turon', menu['Turon']!, 3),
+  // First receipt: 3 Adobo rice, 1 Iced tea, 3 Turon (Guest)
+  final order1 = [
+    orderOf('Adobo rice', 3),
+    orderOf('Iced tea', 1),
+    orderOf('Turon', 3),
   ];
+  printReceipt(order1);
 
-  printReceipt(order);
+  print('\n-----------------------------\n');
+
+  // Second receipt: Below 300, named customer
+  final order2 = [
+    orderOf('Adobo rice', 1),
+    orderOf('Iced tea', 2),
+  ];
+  printReceipt(order2, customer: 'Maria');
 }
